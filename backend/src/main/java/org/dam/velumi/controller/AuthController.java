@@ -1,9 +1,14 @@
 package org.dam.velumi.controller;
 
+import org.dam.velumi.model.Usuario;
+import org.dam.velumi.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -25,13 +30,32 @@ public class AuthController {
 
     private final AuthenticationManager authManager;
     private final JwtEncoder encoder;
+    private final UserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(AuthenticationManager authManager, JwtEncoder encoder) {
+    public AuthController(AuthenticationManager authManager,
+                          JwtEncoder encoder,
+                          UserRepository userRepo,
+                          PasswordEncoder passwordEncoder) {
         this.authManager = authManager;
         this.encoder = encoder;
+        this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public record LoginRequest(String username, String password) {}
+
+    public record LoginRequest(String username, String password) {
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@RequestBody LoginRequest req) {
+        Usuario u = new Usuario();
+        u.setUsername(req.username());
+        u.setPassword(passwordEncoder.encode(req.password()));
+        u.setRol("ROLE_USER");
+        userRepo.save(u);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody LoginRequest req) {
