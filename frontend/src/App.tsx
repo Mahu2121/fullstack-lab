@@ -3,13 +3,20 @@ import { getProductos } from "./services/ProductService";
 import { isLoggedIn, logout } from "./services/AuthService";
 import type { Producto } from "./types/Producto";
 import Login from "./components/Login";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
-import { BlurFade } from "@/components/ui/blur-fade";
 import ProductCard from "./components/ProductCard";
+import Sidebar from "./components/Sidebar";
+import type { Seccion } from "./components/Sidebar";
+import Topbar from "./components/Topbar";
+import { BlurFade } from "@/components/ui/blur-fade";
 
 function App() {
     const [logged, setLogged] = useState(isLoggedIn());
     const [productos, setProductos] = useState<Producto[]>([]);
+    const [seccion, setSeccion] = useState<Seccion>("productos");
+    const [busqueda, setBusqueda] = useState("");
+    const [categoria, setCategoria] = useState("Todos");
+
+    const categorias = ["Todos", ...new Set(productos.map((p) => p.categoria))];
 
     useEffect(() => {
         if (!logged) return;
@@ -26,31 +33,59 @@ function App() {
         return <Login onLogin={() => setLogged(true)} />;
     }
 
-    return (
-        <div className="min-h-screen bg-neutral-50 px-4 py-10">
-            <div className="mx-auto max-w-3xl">
-                <BlurFade delay={0.1}>
-                    <header className="mb-8 flex items-center justify-between">
-                        <h1 className="text-3xl font-bold tracking-tight">
-                            Productos Velumi
-                        </h1>
-                        <ShimmerButton onClick={handleLogout} className="px-4 py-2 text-sm">
-                            Cerrar sesión
-                        </ShimmerButton>
-                    </header>
-                </BlurFade>
+    const filtrados = productos.filter((p) => {
+        const coincideNombre = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
+        const coincideCategoria = categoria === "Todos" || p.categoria === categoria;
+        return coincideNombre && coincideCategoria;
+    });
 
-                {productos.length === 0 ? (
-                    <p className="text-neutral-500">No hay productos todavía.</p>
-                ) : (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        {productos.map((p, i) => (
-                            <BlurFade key={p.id} delay={0.15 + i * 0.05}>
-                                <ProductCard producto={p} />
-                            </BlurFade>
-                        ))}
-                    </div>
-                )}
+    return (
+        <div className="flex h-screen bg-slate-50">
+            <Sidebar activa={seccion} onChange={setSeccion} onLogout={handleLogout} />
+
+            <div className="flex flex-1 flex-col overflow-hidden">
+                <Topbar busqueda={busqueda} onBusqueda={setBusqueda} />
+
+                <main className="flex-1 overflow-y-auto p-6">
+                    {seccion === "productos" ? (
+                        <>
+                            <h1 className="text-3xl font-bold">Productos</h1>
+                            <p className="mb-6 text-slate-500">
+                                Descubre nuestros productos y encuentra lo que necesitas.
+                            </p>
+
+                            <div className="mb-6 flex flex-wrap gap-2">
+                                {categorias.map((c) => (
+                                    <button
+                                        key={c}
+                                        onClick={() => setCategoria(c)}
+                                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                                            categoria === c
+                                                ? "bg-slate-900 text-white"
+                                                : "bg-white text-slate-600 hover:bg-slate-100"
+                                        }`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {filtrados.length === 0 ? (
+                                <p className="text-slate-500">No hay productos.</p>
+                            ) : (
+                                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                    {filtrados.map((p, i) => (
+                                        <BlurFade key={p.id} delay={0.1 + i * 0.05}>
+                                            <ProductCard producto={p} />
+                                        </BlurFade>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <h1 className="text-3xl font-bold capitalize">{seccion}</h1>
+                    )}
+                </main>
             </div>
         </div>
     );
