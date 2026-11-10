@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getProductos } from "./services/ProductService";
-import { isLoggedIn, logout } from "./services/AuthService";
+import { isLoggedIn, logout, esAdmin } from "./services/AuthService";
 import type { Producto } from "./types/Producto";
 import Login from "./components/Login";
 import ProductCard from "./components/ProductCard";
 import Sidebar from "./components/Sidebar";
-import type { Seccion } from "./components/Sidebar";
+import type { Seccion, SeccionAdmin } from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import AdminPanel from "./components/admin/AdminPanel";
 import { BlurFade } from "@/components/ui/blur-fade";
+
+const esSeccionAdmin = (s: Seccion): s is SeccionAdmin => s.startsWith("admin-");
 
 function App() {
     const [logged, setLogged] = useState(isLoggedIn());
@@ -16,7 +19,20 @@ function App() {
     const [busqueda, setBusqueda] = useState("");
     const [categoria, setCategoria] = useState("Todos");
 
+    // Se recalcula cada vez que cambia el estado de sesión
+    const admin = useMemo(() => esAdmin(), [logged]);
+
+    //  un no-admin nunca puede ver una sección de administración
+    const seccionActual: Seccion =
+        esSeccionAdmin(seccion) && !admin ? "productos" : seccion;
+
     const categorias = ["Todos", ...new Set(productos.map((p) => p.categoria))];
+
+    const filtrados = productos.filter((p) => {
+        const coincideNombre = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
+        const coincideCategoria = categoria === "Todos" || p.categoria === categoria;
+        return coincideNombre && coincideCategoria;
+    });
 
     useEffect(() => {
         if (!logged) return;
@@ -26,6 +42,7 @@ function App() {
     function handleLogout() {
         logout();
         setProductos([]);
+        setSeccion("productos"); // evita que el siguiente usuario herede la sección admin
         setLogged(false);
     }
 
@@ -33,22 +50,23 @@ function App() {
         return <Login onLogin={() => setLogged(true)} />;
     }
 
-    const filtrados = productos.filter((p) => {
-        const coincideNombre = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
-        const coincideCategoria = categoria === "Todos" || p.categoria === categoria;
-        return coincideNombre && coincideCategoria;
-    });
-
     return (
         <div className="flex h-screen bg-slate-50">
-            <Sidebar activa={seccion} onChange={setSeccion} onLogout={handleLogout} />
+            <Sidebar
+                activa={seccionActual}
+                onChange={setSeccion}
+                onLogout={handleLogout}
+                esAdmin={admin}
+            />
 
             <div className="flex flex-1 flex-col overflow-hidden">
-                <Topbar busqueda={busqueda} onBusqueda={setBusqueda} />
 
                 <main className="flex-1 overflow-y-auto p-6">
-                    {seccion === "productos" ? (
+                    {esSeccionAdmin(seccionActual) ? (
+                        <AdminPanel seccion={seccionActual} />
+                    ) : seccionActual === "productos" ? (
                         <>
+                            <Topbar busqueda={busqueda} onBusqueda={setBusqueda} />
                             <h1 className="text-3xl font-bold">Productos</h1>
                             <p className="mb-6 text-slate-500">
                                 Descubre nuestros productos y encuentra lo que necesitas.
@@ -83,7 +101,7 @@ function App() {
                             )}
                         </>
                     ) : (
-                        <h1 className="text-3xl font-bold capitalize">{seccion}</h1>
+                        <h1 className="text-3xl font-bold capitalize">{seccionActual}</h1>
                     )}
                 </main>
             </div>
