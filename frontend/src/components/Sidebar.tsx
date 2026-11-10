@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type SeccionUsuario = "inicio" | "productos" | "perfil" | "pedidos" | "configuracion";
+export type SeccionUsuario = "inicio" | "productos" | "perfil" | "pedidos";
 export type SeccionAdmin = "admin-usuarios" | "admin-productos" | "admin-estadisticas";
 export type Seccion = SeccionUsuario | SeccionAdmin;
 
@@ -19,7 +19,6 @@ const itemsUsuario: Item<SeccionUsuario>[] = [
     { id: "productos", label: "Productos", icon: Tag },
     { id: "perfil", label: "Mi Perfil", icon: User },
     { id: "pedidos", label: "Pedidos", icon: Package },
-    { id: "configuracion", label: "Configuración", icon: Settings },
 ];
 
 const itemsAdmin: Item<SeccionAdmin>[] = [
