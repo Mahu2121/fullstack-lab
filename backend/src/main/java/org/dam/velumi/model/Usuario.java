@@ -19,8 +19,6 @@ public class Usuario {
     @Column(nullable = false)
     private String rol;
 
-    public Usuario() {}
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
