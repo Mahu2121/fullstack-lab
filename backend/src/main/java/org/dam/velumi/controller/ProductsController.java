@@ -1,7 +1,6 @@
 package org.dam.velumi.controller;
 
 import org.dam.velumi.model.Product;
-import org.dam.velumi.repository.ProductoRepository;
 import org.dam.velumi.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -19,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 @RestController
 @RequestMapping("/api/productos")
 public class ProductsController {
@@ -27,9 +27,6 @@ public class ProductsController {
 
     @Autowired
     private ProductService productService;
-
-    @Autowired
-    private ProductoRepository productoRepository;
 
     @GetMapping
     public List<Product> listar() {
@@ -41,10 +38,20 @@ public class ProductsController {
         return productService.save(product);
     }
 
+    @PutMapping("/{id}")
+    public Product actualizar(@PathVariable Long id, @RequestBody Product producto) {
+        return productService.update(id, producto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        productService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/imagen")
     public ResponseEntity<Resource> getImagen(@PathVariable Long id) throws IOException {
-        Product producto = productoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Product producto = productService.findById(id);
 
         if (producto.getImagenNombre() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
