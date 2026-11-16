@@ -1,5 +1,6 @@
 package org.dam.velumi.controller;
 
+import jakarta.validation.Valid;
 import org.dam.velumi.model.Usuario;
 import org.dam.velumi.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -44,15 +45,16 @@ public class AuthController {
     }
 
 
-    public record LoginRequest(String username, String password) {
+    public record LoginRequest(String username, String password, String email) {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody LoginRequest req) {
+    public ResponseEntity<Void> register(@Valid @RequestBody LoginRequest req) {
         Usuario u = new Usuario();
         u.setUsername(req.username());
         u.setPassword(passwordEncoder.encode(req.password()));
         u.setRol("ROLE_USER");
+        u.setEmail(req.email);
         userRepo.save(u);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
