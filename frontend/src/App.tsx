@@ -36,7 +36,9 @@ function App() {
 
     useEffect(() => {
         if (!logged) return;
-        getProductos().then(setProductos).catch(console.error);
+        getProductos()
+            .then((datos) => setProductos(datos.filter(p => p.activo)))
+            .catch(console.error);
     }, [logged]);
 
     function handleLogout() {
