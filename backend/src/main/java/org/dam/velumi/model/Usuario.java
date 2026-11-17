@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 @Getter
 @Entity
@@ -18,6 +20,7 @@ public class Usuario {
     private String username;
 
     @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(nullable = false)
